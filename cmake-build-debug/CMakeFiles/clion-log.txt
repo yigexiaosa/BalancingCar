@@ -1,0 +1,4 @@
+"D:\clion\CLion 2022.2.4\bin\cmake\win\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Debug "-DCMAKE_MAKE_PROGRAM=D:/clion/CLion 2022.2.4/bin/ninja/win/ninja.exe" -G Ninja -S D:\desktop\A\keil5\KeilProject\STM32\BalancingCar -B D:\desktop\A\keil5\KeilProject\STM32\BalancingCar\cmake-build-debug
+-- Configuring done
+-- Generating done
+-- Build files have been written to: D:/desktop/A/keil5/KeilProject/STM32/BalancingCar/cmake-build-debug

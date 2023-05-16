@@ -1,0 +1,159 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-Debug-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.23"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10,
+						11
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "BalancingCar",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10,
+						11
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "Bluetooth::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-Bluetooth-Debug-69c0af0be3bacfc6091e.json",
+					"name" : "Bluetooth",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "EncoderSpeed::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-EncoderSpeed-Debug-9e45207864133e42d5dc.json",
+					"name" : "EncoderSpeed",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "HC_RS04::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-HC_RS04-Debug-7c8f76bf63d248ed153f.json",
+					"name" : "HC_RS04",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "KalmanFilter::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-KalmanFilter-Debug-14c3159bb71fc8af32c0.json",
+					"name" : "KalmanFilter",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "Key::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-Key-Debug-a9a5b93d274c6615d7ae.json",
+					"name" : "Key",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "MPU6050::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-MPU6050-Debug-2b4bcea01af0bc6ccb13.json",
+					"name" : "MPU6050",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "Motor::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-Motor-Debug-52e78214794a04d4d17a.json",
+					"name" : "Motor",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "PID::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-PID-Debug-390fa913758476a382fc.json",
+					"name" : "PID",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "Serial::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-Serial-Debug-f9e961d06c8fd5702996.json",
+					"name" : "Serial",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "Timer::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-Timer-Debug-d9d0d80925a26595057d.json",
+					"name" : "Timer",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "TimerCount::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-TimerCount-Debug-d86a54c1fa4c5dded12d.json",
+					"name" : "TimerCount",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "main::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-main-Debug-7409133abf36cf27248d.json",
+					"name" : "main",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "D:/desktop/A/keil5/KeilProject/STM32/BalancingCar/cmake-build-debug",
+		"source" : "D:/desktop/A/keil5/KeilProject/STM32/BalancingCar"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 4
+	}
+}
