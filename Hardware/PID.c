@@ -8,6 +8,8 @@
 #define PID_Velocity_Kp (-10.0f)
 #define PID_Velocity_Ki (-0.05f)
 
+float Encoder_Integral;
+
 /**
  * @brief 直立环 PD
  * @param Angle 当前俯仰角度
@@ -29,7 +31,6 @@ float PID_Balance(float Angle, float Gyro) {
 float PID_Velocity(int encoder_left,int encoder_right,int Speed)
 {
     static float Velocity,Encoder_Least,Encoder,Movement;
-    static float Encoder_Integral;
 
 //    Movement = Speed;
 
@@ -43,4 +44,11 @@ float PID_Velocity(int encoder_left,int encoder_right,int Speed)
     if(Encoder_Integral<-100000)	Encoder_Integral=-100000;              //===积分限幅
     Velocity=Encoder*PID_Velocity_Kp+Encoder_Integral*PID_Velocity_Ki;//===速度控制
     return Velocity;
+}
+
+/**
+ * @brief 清楚积分累计
+ */
+void PID_ClearI(void){
+    Encoder_Integral = 0;
 }

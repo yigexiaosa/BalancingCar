@@ -204,9 +204,9 @@ void MPU6050_GetData(MPU6050_GetDataTypeDef* Data){
     DataL = MPU6050_ReadReg(MPU6050_ACCEL_XOUT_L);
     Data->AccX = ((DataH << 8) | DataL) + MPU6050_AccXCorrect;
 
-//    DataH = MPU6050_ReadReg(MPU6050_ACCEL_YOUT_H);
-//    DataL = MPU6050_ReadReg(MPU6050_ACCEL_YOUT_L);
-//    Data->AccY = ((DataH << 8) | DataL) + MPU6050_AccYCorrect;
+    DataH = MPU6050_ReadReg(MPU6050_ACCEL_YOUT_H);
+    DataL = MPU6050_ReadReg(MPU6050_ACCEL_YOUT_L);
+    Data->AccY = ((DataH << 8) | DataL) + MPU6050_AccYCorrect;
 
     DataH = MPU6050_ReadReg(MPU6050_ACCEL_ZOUT_H);
     DataL = MPU6050_ReadReg(MPU6050_ACCEL_ZOUT_L);

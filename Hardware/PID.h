@@ -3,5 +3,6 @@
 
 float PID_Balance(float Angle, float Gyro);
 float PID_Velocity(int encoder_left,int encoder_right,int Speed);
+void PID_ClearI(void);
 
 #endif

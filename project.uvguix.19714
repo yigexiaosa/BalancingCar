@@ -16,7 +16,7 @@
     <View>
       <WinId>346</WinId>
       <ViewName>Code Coverage</ViewName>
-      <TableColWidths>210 100</TableColWidths>
+      <TableColWidths>1413 157</TableColWidths>
     </View>
     <View>
       <WinId>204</WinId>
@@ -60,7 +60,7 @@
       <WinId>466</WinId>
       <ViewName>Source Browser</ViewName>
       <UserString>500</UserString>
-      <TableColWidths>166</TableColWidths>
+      <TableColWidths>300</TableColWidths>
     </View>
   </TreeListPane>
 
