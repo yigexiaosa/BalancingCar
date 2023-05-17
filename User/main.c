@@ -1,18 +1,19 @@
 #include "stm32f10x.h"
 #include "stm32f10x_conf.h"
 #include "OLED.h"
-#include "EncoderSpeed.h"
-#include "Motor.h"
-#include "Timer.h"
+#include "EncoderSpeed.h" //TIM3 TIM4
+#include "Motor.h"// TIM2
+#include "Timer.h"// TIM1
 #include "MPU6050.h"
 #include "KalmanFilter.h"
 #include "Delay.h"
 #include "math.h"
 #include "PID.h"
-#include "HC_RS04.h"
+#include "HC_RS04.h"// TIM1
 #include "Bluetooth.h"
+#include "Key.h"
 
-int16_t targetSpeed,leftTargetSpeed,rightTargetSpeed,leftEncoderSpeed,rightEncoderSpeed;
+int16_t targetSpeed,targetTurn,targetDistance,leftEncoderSpeed,rightEncoderSpeed;
 // 输入给电机的速度
 int16_t leftSpeed, rightSpeed;
 // 定时函数运行耗时计时
@@ -26,9 +27,12 @@ uint8_t bluetooth_ReceiveData,bluetooth_SendData;
 // 状态机
 uint8_t mainState_Now,mainState_Last,mainState_0;
 // PID相关
-float speedLoop,verticalLoop,turnLoop;
+float speedLoop,verticalLoop,turnLoop,distanceLoop;
 // 平滑变速
-float leftSpeed_LPF,rightSpeed_LPF,Speed_LPF;
+float leftSpeed_LPF,rightSpeed_LPF,speed_LPF,turn;
+
+// key
+int16_t key_Speed = 400;
 
 MPU6050_GetDataTypeDef Data;
 
@@ -54,28 +58,38 @@ int main(){
     MPU6050_Init();
     HC_RS04_Init();
     Bluetooth_Init();
+    Key_Init();
 
     // 定时器最后初始化
     Timer_Init();
 
     while(1){
+        if(Key_GetNum() == 1){
+            targetSpeed = targetSpeed + key_Speed;
+            if(targetSpeed >= 2400 || targetSpeed <= -2400){
+                key_Speed = -key_Speed;
+                targetSpeed = 0;
+            }
+        }
 
         // 偏航角
-        OLED_ShowSignedNum(1, 1, (int16_t)angleZ,3);
-        OLED_ShowString(1, 5, ".");
-        OLED_ShowNum(1, 6, ((int16_t)((angleZ > 0 ? angleZ: -angleZ)*1000))%1000,3);
-
+//        OLED_ShowSignedNum(1, 1, (int16_t)angleZ,3);
+//        OLED_ShowString(1, 5, ".");
+//        OLED_ShowNum(1, 6, ((int16_t)((angleZ > 0 ? angleZ: -angleZ)*1000))%1000,3);
+//
         // 俯仰角
         OLED_ShowSignedNum(2, 1, (int16_t)angleY,3);
         OLED_ShowString(2, 5, ".");
         OLED_ShowNum(2, 6, ((int16_t)((angleY > 0 ? angleY: -angleY)*1000))%1000,3);
 
-        OLED_ShowNum(3, 1, time, 5);
+//        // 运行一次函数所需时间
+        OLED_ShowNum(3, 9, time/100, 2);
 
         // 速度
-        OLED_ShowSignedNum(4, 1, leftTargetSpeed, 5);
-        OLED_ShowSignedNum(4, 10, leftEncoderSpeed, 5);
-        OLED_ShowSignedNum(3, 10, leftSpeed, 5);
+        OLED_ShowSignedNum(3, 1, leftSpeed, 5);
+        OLED_ShowSignedNum(3, 11, leftEncoderSpeed, 4);
+        OLED_ShowSignedNum(4, 1, rightSpeed, 5);
+        OLED_ShowSignedNum(4, 11, rightEncoderSpeed, 4);
 
 
 
@@ -104,8 +118,7 @@ void TIM1_UP_IRQHandler(void){
     }
     {// 电机测速
         leftEncoderSpeed = EncoderSpeed_GetLeft() * 1000 / (4 * 34);
-//        rightEncoderSpeed = EncoderSpeed_GetRight() * 1000 / (4 * 34);
-        rightEncoderSpeed = leftEncoderSpeed;
+        rightEncoderSpeed = EncoderSpeed_GetRight() * 1000 / (4 * 34);
     }
 
     MPU6050_ReadDataAndFilter();
@@ -116,19 +129,21 @@ void TIM1_UP_IRQHandler(void){
             if(mainState_Last != 0){// 如果是由其他状态转换而来的第一次需要清除积分累计
                 PID_ClearI();
                 mainState_Last = 0;
-                break;
             }
-            mainState_Last = 0;
 
             // 平滑加速
-            Speed_LPF = Speed_LPF * 0.8f + targetSpeed * 0.2f;// 一阶低通滤波，为了平滑加速
+            speed_LPF = speed_LPF * 0.8f + targetSpeed * 0.2f;// 一阶低通滤波，为了平滑加速
+            // 平滑转向
+
             // PID
             {
-
+                Loop_Vertical();
+                Loop_Speed();
+//                Loop_Turn();
             }
             // 串联
-            leftSpeed = verticalLoop*0.5 +speedLoop*0.5;
-            rightSpeed =verticalLoop*0.5 +speedLoop*0.5;
+            leftSpeed = verticalLoop*0.4 + speedLoop*0.2 + turnLoop*0.2;
+            rightSpeed =verticalLoop*0.4 + speedLoop*0.2 - turnLoop*0.2;
             // 速度设置
             Motor_SetLeftSpeed(leftSpeed);
             Motor_SetRightSpeed(rightSpeed);
@@ -140,11 +155,15 @@ void TIM1_UP_IRQHandler(void){
         case 1:{// 悬空状态(小车被拿起)
             mainState_Last = 1;
 
+
+
             break;
         }
         case 2:{// 无法自主调节,关闭电机
-            mainState_Last = 1;
+            mainState_Last = 2;
 
+            Motor_SetLeftSpeed(0);
+            Motor_SetRightSpeed(0);
             break;
         }
         default:{// 不存在的情况
@@ -161,6 +180,9 @@ void TIM1_UP_IRQHandler(void){
 
     // 测量运行一次定时函数所消耗的时间
     time = TIM_GetCounter(TIM1);
+    if(time/100 <= 4 || time/100 >= 8){// 如果超时就发送一次警告
+        Bluetooth_SendByte(0xff);
+    }
 
     TIM_ClearITPendingBit(Timer_TIMX, TIM_IT_Update);
 }
@@ -181,9 +203,12 @@ void MPU6050_ReadDataAndFilter(void){
     // 俯仰角速度
     float addAngleY = ((float) Data.GyroY) * MPU6050_AngleRange / 32768;
     // 利用加速度计获取俯仰角
-    angleY = -atanf((float) Data.AccX / (float) Data.AccZ) * 57.2974f;
+    float angleY_m = -atanf((float) Data.AccX / (float) Data.AccZ) * 57.2974f;
     // 卡尔曼滤波数据融合
-    angleY = Kalman_Filter_Y(angleY, addAngleY);
+//    angleY = Kalman_Filter_Y(angleY, addAngleY);
+    // 一阶互补滤波数据融合
+    static float k1 = 0.2f;
+    angleY = k1 * angleY_m + (1-k1) * (angleY + addAngleY * Kalman_Filter_dt);
 }
 
 /**
@@ -198,8 +223,9 @@ void MainStateTransition_DipToBig(void){
         else if (mainState_0_To_2_time > 0) mainState_0_To_2_time = 0;
     }
     // 状态转换
-    if (mainState_0_To_2_time >= 500) {// 持续0.5s倾角过大,判定为无法自主恢复
-
+    if (mainState_0_To_2_time >= 200) {// 持续0.5s倾角过大,判定为无法自主恢复
+        mainState_Now = 2;
+        mainState_0_To_2_time = 0;
     }
 }
 
@@ -232,34 +258,30 @@ void MainStateTransition_Bluetooth(void){
 }
 
 /**
- * @brief 直立环
+ * @brief 直立环 0.4
  */
 void Loop_Vertical(void){
-    // 直立环
-    verticalLoop = PID_Balance(angleY, ((float) Data.GyroY) * MPU6050_AngleRange / 32768);
-    // 速度环
-    speedLoop = PID_Velocity(leftEncoderSpeed, rightEncoderSpeed, Speed_LPF);
-    // 转向环
-//       turnLoop = ;
+    verticalLoop = PID_Vertical(angleY, ((float) Data.GyroY) * MPU6050_AngleRange / 32768);
 }
 
 /**
- * @brief 速度环
+ * @brief 速度环 0.2
  */
 void Loop_Speed(void){
-
+    speedLoop = PID_Speed(leftEncoderSpeed, rightEncoderSpeed, speed_LPF);
 }
 
 /**
- * @brief 转向环
+ * @brief 转向环 0.2
  */
 void Loop_Turn(void){
-
+    turnLoop = PID_Turn(leftEncoderSpeed, rightEncoderSpeed, targetTurn,
+                        ((float) Data.GyroZ) * MPU6050_AngleRange / 32768);
 }
 
 /**
- * @brief 距离环
+ * @brief 距离环 0.2
  */
 void Loop_Distance(void){
-
+    distanceLoop = PID_Distance(leftEncoderSpeed, rightEncoderSpeed, targetDistance,HC_RS04_Distance);
 }

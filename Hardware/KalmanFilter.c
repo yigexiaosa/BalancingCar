@@ -4,7 +4,7 @@
 
 //卡尔曼滤波参数与函数
 float dt=Kalman_Filter_dt;//注意：dt的取值为kalman滤波器采样时间
-float Q_angle=0.001f, Q_gyro=0.005f; //角度数据置信度,角速度数据置信度
+float Q_angle=0.005f, Q_gyro=0.001f; //角度数据置信度,角速度数据置信度
 float R_angle=0.5f ,C_0 = 1.0f;
 
 //卡尔曼滤波

@@ -10,7 +10,7 @@
 #define MPU6050_GyroXCorrect    (-48)
 #define MPU6050_GyroYCorrect    (+18)
 #define MPU6050_GyroZCorrect    0
-#define MPU6050_I2C_Speed       ((uint32_t)1200*1e3)
+#define MPU6050_I2C_Speed       ((uint32_t)800*1e3)
 
 #define MPU6050_ADDRESS 0xD0
 
@@ -72,7 +72,7 @@ void MPU6050_WaitState(void){
 
 void MPU6050WaitCheckEvent(I2C_TypeDef* I2Cx, uint32_t I2C_EVENT){
     if(MPU6050_State != 0) return;
-    uint32_t TimeOut = 50;
+    uint32_t TimeOut = 200;
     // 超时退出，完整项目的话需要考虑对对应错误进行处理
     while(I2C_CheckEvent(I2Cx, I2C_EVENT) != SUCCESS){
         if(TimeOut-- <= 0){
@@ -212,13 +212,13 @@ void MPU6050_GetData(MPU6050_GetDataTypeDef* Data){
     DataL = MPU6050_ReadReg(MPU6050_ACCEL_ZOUT_L);
     Data->AccZ = ((DataH << 8) | DataL) + MPU6050_AccZCorrect;
 
-    DataH = MPU6050_ReadReg(MPU6050_GYRO_XOUT_H);
-    DataL = MPU6050_ReadReg(MPU6050_GYRO_XOUT_L);
-    Data->GyroX = ((DataH << 8) | DataL) + MPU6050_GyroXCorrect;
+//    DataH = MPU6050_ReadReg(MPU6050_GYRO_XOUT_H);
+//    DataL = MPU6050_ReadReg(MPU6050_GYRO_XOUT_L);
+//    Data->GyroX = ((DataH << 8) | DataL) + MPU6050_GyroXCorrect;
 
-//    DataH = MPU6050_ReadReg(MPU6050_GYRO_YOUT_H);
-//    DataL = MPU6050_ReadReg(MPU6050_GYRO_YOUT_L);
-//    Data->GyroY = ((DataH << 8) | DataL) + MPU6050_GyroYCorrect;
+    DataH = MPU6050_ReadReg(MPU6050_GYRO_YOUT_H);
+    DataL = MPU6050_ReadReg(MPU6050_GYRO_YOUT_L);
+    Data->GyroY = ((DataH << 8) | DataL) + MPU6050_GyroYCorrect;
 
     DataH = MPU6050_ReadReg(MPU6050_GYRO_ZOUT_H);
     DataL = MPU6050_ReadReg(MPU6050_GYRO_ZOUT_L);
