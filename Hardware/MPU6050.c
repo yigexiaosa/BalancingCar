@@ -10,7 +10,7 @@
 #define MPU6050_GyroXCorrect    (-48)
 #define MPU6050_GyroYCorrect    (+18)
 #define MPU6050_GyroZCorrect    0
-#define MPU6050_I2C_Speed       ((uint32_t)800*1e3)
+#define MPU6050_I2C_Speed       ((uint32_t)1000*1e3)
 
 #define MPU6050_ADDRESS 0xD0
 
@@ -180,14 +180,14 @@ void MPU6050_Init(void){
     // 关闭休眠模式,采用陀螺仪时钟
     MPU6050_WriteReg(MPU6050_PWR_MGMT_1, 0x01);
     MPU6050_WriteReg(MPU6050_PWR_MGMT_2, 0x00);
-    // 采样率分频,决定了数据输出的快慢  10分频
-    MPU6050_WriteReg(MPU6050_SMPLRT_DIV, 0x09);
+    // 采样率分频,决定了数据输出的快慢  1分频
+    MPU6050_WriteReg(MPU6050_SMPLRT_DIV, 0x00);
     // 配置寄存器
     MPU6050_WriteReg(MPU6050_CONFIG, 0x06);
     // 陀螺仪设置寄存器
     MPU6050_WriteReg(MPU6050_GYRO_CONFIG, 0x18);
     // 加速度计寄存器
-    MPU6050_WriteReg(MPU6050_ACCEL_CONFIG, 0x18);
+    MPU6050_WriteReg(MPU6050_ACCEL_CONFIG, 0x00);
 }
 
 uint8_t MPU6050_GetId(void){
@@ -212,9 +212,9 @@ void MPU6050_GetData(MPU6050_GetDataTypeDef* Data){
     DataL = MPU6050_ReadReg(MPU6050_ACCEL_ZOUT_L);
     Data->AccZ = ((DataH << 8) | DataL) + MPU6050_AccZCorrect;
 
-//    DataH = MPU6050_ReadReg(MPU6050_GYRO_XOUT_H);
-//    DataL = MPU6050_ReadReg(MPU6050_GYRO_XOUT_L);
-//    Data->GyroX = ((DataH << 8) | DataL) + MPU6050_GyroXCorrect;
+    DataH = MPU6050_ReadReg(MPU6050_GYRO_XOUT_H);
+    DataL = MPU6050_ReadReg(MPU6050_GYRO_XOUT_L);
+    Data->GyroX = ((DataH << 8) | DataL) + MPU6050_GyroXCorrect;
 
     DataH = MPU6050_ReadReg(MPU6050_GYRO_YOUT_H);
     DataL = MPU6050_ReadReg(MPU6050_GYRO_YOUT_L);

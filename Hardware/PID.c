@@ -2,19 +2,20 @@
 #include "stm32f10x_conf.h"
 
 // 记得调整参数极性
-#define PID_ZHONGZHI (4.0f)
+#define PID_ZHONGZHI (3.0f)
 // 直立环 PD
-#define PID_Vertical_Kp (-200.0f / 0.4f)
-#define PID_Vertical_Kd (-6.0f / 0.4f)
+#define PID_Vertical_Kp (-80.0f)
+#define PID_Vertical_Kd (-3.5f)
 // 速度环 PI
-#define PID_Speed_Kp (0.0f)
-#define PID_Speed_Ki (PID_Speed_Kp / 200.0f)
+#define PID_Speed_Kp (0.70f)
+#define PID_Speed_Ki (PID_Speed_Kp / 200)
+#define PID_Speed_Range (1000/PID_Speed_Ki)
 // 转向环 PD
-#define PID_Turn_Kp (-0.0f / 0.2f)
-#define PID_Turn_Kd (-0.0f / 0.2f)
+#define PID_Turn_Kp (-0.0f)
+#define PID_Turn_Kd (-0.0f)
 // 距离环 Pi
-#define PID_Distance_Kp (-0.0f / 0.2f)
-#define PID_Distance_Ki (-0.0f / 0.2f)
+#define PID_Distance_Kp (-0.0f)
+#define PID_Distance_Ki (-0.0f)
 
 float Encoder_Integral;
 
@@ -40,15 +41,19 @@ float PID_Speed(int encoder_left, int encoder_right, int speed) {
     static double Velocity, Encoder_Least, Encoder;
     static double Encoder_Integral;
     Encoder_Least = (encoder_left + encoder_right) * 0.5f - speed;
-    Encoder *= 0.7f;
+    Encoder *= 0.7f;// 低通滤波
     Encoder += Encoder_Least*0.3f;
-    if(Encoder * Encoder_Integral < 0){
-        Encoder_Integral = 0;
+    static double E_I_K = 1;
+    if(Encoder_Integral * Encoder < 0){
+        Encoder_Integral += Encoder*E_I_K*3.0f;
+    }else{
+        Encoder_Integral += Encoder*E_I_K;
     }
-    Encoder_Integral += Encoder;
+//    Encoder_Integral += Encoder*E_I_K;
+
     // 积分限幅
-    if(Encoder_Integral >= 100000) Encoder_Integral = 100000;
-    if(Encoder_Integral <= -100000) Encoder_Integral = -100000;
+    if(Encoder_Integral >= PID_Speed_Range) Encoder_Integral = PID_Speed_Range;
+    if(Encoder_Integral <= -PID_Speed_Range) Encoder_Integral = -PID_Speed_Range;
     Velocity = Encoder * PID_Speed_Kp + Encoder_Integral * PID_Speed_Ki;
     return Velocity;
 }

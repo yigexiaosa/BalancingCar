@@ -30,11 +30,15 @@ uint8_t mainState_Now,mainState_Last,mainState_0;
 float speedLoop,verticalLoop,turnLoop,distanceLoop;
 // 平滑变速
 float leftSpeed_LPF,rightSpeed_LPF,speed_LPF,turn;
+// 电机测速时间计
+int16_t TimeSpeedCount;
 
 // key
 int16_t key_Speed = 400;
 
 MPU6050_GetDataTypeDef Data;
+
+int32_t testTimeCount,testDataCount,testOldAccX,testNum;
 
 void MPU6050_ReadDataAndFilter(void);
 void MainStateTransition_DipToBig(void);
@@ -73,16 +77,19 @@ int main(){
         }
 
         // 偏航角
-//        OLED_ShowSignedNum(1, 1, (int16_t)angleZ,3);
-//        OLED_ShowString(1, 5, ".");
-//        OLED_ShowNum(1, 6, ((int16_t)((angleZ > 0 ? angleZ: -angleZ)*1000))%1000,3);
-//
+        OLED_ShowSignedNum(1, 1, (int16_t)angleZ,3);
+        OLED_ShowString(1, 5, ".");
+        OLED_ShowNum(1, 6, ((int16_t)((angleZ > 0 ? angleZ: -angleZ)*1000))%1000,3);
+
         // 俯仰角
         OLED_ShowSignedNum(2, 1, (int16_t)angleY,3);
         OLED_ShowString(2, 5, ".");
         OLED_ShowNum(2, 6, ((int16_t)((angleY > 0 ? angleY: -angleY)*1000))%1000,3);
 
-//        // 运行一次函数所需时间
+//        // MPU6050更新频率
+//        OLED_ShowNum(1, 10, testNum,5);
+
+        // 运行一次函数所需时间
         OLED_ShowNum(3, 9, time/100, 2);
 
         // 速度
@@ -91,9 +98,7 @@ int main(){
         OLED_ShowSignedNum(4, 1, rightSpeed, 5);
         OLED_ShowSignedNum(4, 11, rightEncoderSpeed, 4);
 
-
-
-//        // 距离
+        // 距离
 //        OLED_ShowNum(1, 1, HC_RS04_Time_Small_Old, 5);
 //        OLED_ShowNum(1, 10, HC_RS04_Time_Small_New, 5);
 //        OLED_ShowNum(2, 1, HC_RS04_Time_Big_New, 5);
@@ -107,6 +112,19 @@ int main(){
         }
 
 //        OLED_ShowHexNum(1, 1, bluetooth_Receive ta, 2);
+
+//        OLED_ShowNum(1, 1, time, 5);
+//        OLED_ShowSignedNum(2, 1, Data.AccX, 5);
+//        OLED_ShowSignedNum(3, 1, Data.AccY, 5);
+//        OLED_ShowSignedNum(4, 1, Data.AccZ, 5);
+//        OLED_ShowSignedNum(2, 8, Data.GyroX, 5);
+//        OLED_ShowSignedNum(3, 8, Data.GyroY, 5);
+//        OLED_ShowSignedNum(4, 8, Data.GyroZ, 5);
+//        static int16_t max;
+//        if(max <  Data.GyroX)max =  Data.GyroX;
+//        if(max < Data.GyroY) max = Data.GyroY;
+//        if(max < Data.GyroZ) max= Data.GyroZ;
+//        OLED_ShowSignedNum(1, 8, max, 5);
     }
 }
 
@@ -116,9 +134,13 @@ void TIM1_UP_IRQHandler(void){
     {// 超声波时间
         HC_RS04_Time_Big++;
     }
-    {// 电机测速
-        leftEncoderSpeed = EncoderSpeed_GetLeft() * 1000 / (4 * 34);
-        rightEncoderSpeed = EncoderSpeed_GetRight() * 1000 / (4 * 34);
+
+    static int16_t T_S_C_K = 10;
+    TimeSpeedCount++;
+    if(TimeSpeedCount >= T_S_C_K){// 电机测速 200Hz
+        TimeSpeedCount = 0;
+        leftEncoderSpeed = EncoderSpeed_GetLeft() * (1000 / T_S_C_K) / (4 * 34);
+        rightEncoderSpeed = EncoderSpeed_GetRight() * (1000 / T_S_C_K) / (4 * 34);
     }
 
     MPU6050_ReadDataAndFilter();
@@ -142,8 +164,8 @@ void TIM1_UP_IRQHandler(void){
 //                Loop_Turn();
             }
             // 串联
-            leftSpeed = verticalLoop*0.4 + speedLoop*0.2 + turnLoop*0.2;
-            rightSpeed =verticalLoop*0.4 + speedLoop*0.2 - turnLoop*0.2;
+            leftSpeed = verticalLoop + speedLoop + turnLoop;
+            rightSpeed =verticalLoop + speedLoop - turnLoop;
             // 速度设置
             Motor_SetLeftSpeed(leftSpeed);
             Motor_SetRightSpeed(rightSpeed);
@@ -178,6 +200,17 @@ void TIM1_UP_IRQHandler(void){
         HC_RS04_Open();
     }
 
+    // 每1s进行一次更新次数统计
+    testTimeCount++;
+    if(testOldAccX != Data.AccX){
+        testDataCount++;
+    }
+    if(testTimeCount >= 1000){
+        testNum = testDataCount;
+        testTimeCount = 0;
+        testDataCount = 0;
+    }
+
     // 测量运行一次定时函数所消耗的时间
     time = TIM_GetCounter(TIM1);
     if(time/100 <= 4 || time/100 >= 8){// 如果超时就发送一次警告
@@ -207,7 +240,7 @@ void MPU6050_ReadDataAndFilter(void){
     // 卡尔曼滤波数据融合
 //    angleY = Kalman_Filter_Y(angleY, addAngleY);
     // 一阶互补滤波数据融合
-    static float k1 = 0.2f;
+    static float k1 = 0.001f;
     angleY = k1 * angleY_m + (1-k1) * (angleY + addAngleY * Kalman_Filter_dt);
 }
 
@@ -216,7 +249,7 @@ void MPU6050_ReadDataAndFilter(void){
  */
 void MainStateTransition_DipToBig(void){
     static int16_t mainState_0_To_2_time;
-    if (angleY > 50 || angleY < -50) {// 倾角过大计时
+    if (angleY > 30 || angleY < -30) {// 倾角过大计时
         mainState_0_To_2_time++;
     } else {// 逐步清零
         if (mainState_0_To_2_time >= 5) mainState_0_To_2_time -= 5;
